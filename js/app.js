@@ -4,7 +4,7 @@ let draftsList = [];
 
 // Base API configuration
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8000/api/v1'
+  baseURL: 'https://jobexa-backend.onrender.com/api/v1'
 });
 
 // Automatically inject JWT token into all requests
