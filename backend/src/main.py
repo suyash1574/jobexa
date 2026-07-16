@@ -41,8 +41,9 @@ def run_migrations_on_startup():
         if os.path.exists(alembic_ini_path):
             logger.info("Executing automatic startup migrations on database...")
             alembic_cfg = Config(alembic_ini_path)
-            # Inject dynamic DB connection from settings
-            alembic_cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+            # Inject dynamic DB connection from verified engine
+            from src.models.base import engine
+            alembic_cfg.set_main_option("sqlalchemy.url", str(engine.url))
             command.upgrade(alembic_cfg, "head")
             logger.info("Automatic database migrations completed successfully!")
         else:
