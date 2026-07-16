@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jobexa - AI Career Infrastructure</title>
+  <!-- Google Fonts (Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            stripi: {
+              primary: '#533afd',
+              'primary-deep': '#4434d4',
+              'primary-press': '#2e2b8c',
+              'primary-soft': '#665efd',
+              'primary-subdued': '#b9b9f9',
+              dark: '#1c1e54',
+              ink: '#0d253d',
+              'ink-sec': '#273951',
+              'ink-mute': '#64748d',
+              'canvas-soft': '#f6f9fc',
+              'canvas-cream': '#f5e9d4',
+              hairline: '#e3e8ee',
+              'hairline-input': '#a8c3de',
+              ruby: '#ea2261',
+              magenta: '#f96bee',
+              lemon: '#9b6829'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Global Stylistic Set ss01 emulation & styling */
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-feature-settings: "ss01" on;
+      color: #0d253d; /* ink */
+      background-color: #f6f9fc; /* canvas-soft */
+      min-height: 100vh;
+    }
+    /* Tabular figures for money/percentages */
+    .tnum {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" on;
+      letter-spacing: -0.03em;
+    }
+    /* Elevation Level 1 */
+    .shadow-lvl1 {
+      box-shadow: 0 1px 3px rgba(0, 55, 112, 0.08);
+    }
+    /* Elevation Level 2 */
+    .shadow-lvl2 {
+      box-shadow: 0 8px 24px rgba(0, 55, 112, 0.08), 0 2px 6px rgba(0, 55, 112, 0.04);
+    }
+    /* Custom Atmospheric Gradient Mesh for Stripi */
+    .gradient-mesh {
+      background: 
+        radial-gradient(at 0% 0%, #f5e9d4 0px, transparent 55%), 
+        radial-gradient(at 50% 0%, #b9b9f9 0px, transparent 60%), 
+        radial-gradient(at 100% 0%, #ea2261 0px, transparent 55%), 
+        radial-gradient(at 85% 30%, #f96bee 0px, transparent 50%), 
+        #533afd;
+      filter: saturate(1.2);
+    }
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f6f9fc;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #533afd;
+      border-radius: 99px;
+    }
+  </style>
+</head>
+<body class="font-sans antialiased text-stripi-ink bg-stripi-canvas-soft">
+
+  <!-- Atmospheric Gradient Mesh Layer (Upper third of the viewport) -->
+  <div id="mesh-bg" class="absolute top-0 left-0 right-0 h-[38vh] gradient-mesh z-0 transition-all duration-700"></div>
+
+  <!-- AUTHENTICATION FORM SCREEN -->
+  <div id="auth-section" class="relative z-10 flex items-center justify-center min-h-screen px-4">
+    <div class="w-full max-w-[420px] bg-white p-8 md:p-10 rounded-xl shadow-lvl2 border border-stripi-hairline relative">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-light tracking-[-0.04em] text-stripi-ink mb-1.5">Jobexa</h1>
+        <p class="text-stripi-ink-mute text-sm font-light">AI carrier matching & application infrastructure</p>
+      </div>
+
+      <div id="auth-alert" class="hidden mb-4 p-3 rounded bg-stripi-ruby/10 border border-stripi-ruby/20 text-stripi-ruby text-xs font-medium"></div>
+
+      <!-- Tabs toggles -->
+      <div class="flex border-b border-stripi-hairline mb-6 text-sm">
+        <button id="tab-login" class="flex-1 pb-3 font-medium border-b-2 border-stripi-primary text-stripi-primary transition">Log In</button>
+        <button id="tab-register" class="flex-1 pb-3 font-light border-b-2 border-transparent text-stripi-ink-mute hover:text-stripi-ink transition">Register</button>
+      </div>
+
+      <form id="auth-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-wider text-stripi-ink-mute mb-2">Email Address</label>
+          <input id="auth-email" type="email" required class="w-full px-3 py-2.5 rounded bg-white border border-stripi-hair-input focus:border-stripi-primary focus:ring-1 focus:ring-stripi-primary outline-none transition text-sm" placeholder="you@example.com">
+        </div>
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-wider text-stripi-ink-mute mb-2">Password</label>
+          <input id="auth-password" type="password" required class="w-full px-3 py-2.5 rounded bg-white border border-stripi-hair-input focus:border-stripi-primary focus:ring-1 focus:ring-stripi-primary outline-none transition text-sm" placeholder="••••••••">
+        </div>
+        <button type="submit" id="auth-submit-btn" class="w-full mt-2 py-2.5 px-4 rounded-full bg-stripi-primary hover:bg-stripi-primary-deep text-white text-sm font-medium shadow-lvl1 active:scale-[0.98] transition">
+          Log In
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- DASHBOARD OVERVIEW SCREEN -->
+  <div id="dashboard-section" class="hidden relative z-10 min-h-screen flex flex-col md:flex-row">
+    <!-- Sidebar Navigation -->
+    <aside class="w-full md:w-64 bg-stripi-ink border-r border-stripi-ink-sec p-6 flex flex-col justify-between text-white">
+      <div>
+        <div class="flex items-center space-x-3 mb-8">
+          <div class="w-7 h-7 rounded-full bg-stripi-primary flex items-center justify-center text-white font-bold text-sm">J</div>
+          <span class="text-lg font-light tracking-[-0.03em]">Jobexa</span>
+        </div>
+
+        <nav class="space-y-1">
+          <button id="sidebar-dashboard" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-full bg-white/10 text-white text-sm font-medium transition">
+            <span>📊</span> <span>Dashboard</span>
+          </button>
+          <button id="sidebar-pair" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-full text-stripi-ink-mute hover:bg-white/5 hover:text-white text-sm font-light transition">
+            <span>🔗</span> <span>Link Telegram</span>
+          </button>
+          <button id="sidebar-documents" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-full text-stripi-ink-mute hover:bg-white/5 hover:text-white text-sm font-light transition">
+            <span>📄</span> <span>Resumes & Docs</span>
+          </button>
+          <button id="sidebar-billing" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-full text-stripi-ink-mute hover:bg-white/5 hover:text-white text-sm font-light transition">
+            <span>💳</span> <span>Billing & Plans</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="pt-6 border-t border-white/10">
+        <button id="logout-btn" class="w-full py-2 px-4 rounded-full border border-white/20 hover:border-white/50 text-white/80 hover:text-white text-xs font-medium transition">
+          Log Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Area -->
+    <main class="flex-1 p-6 md:p-10 overflow-y-auto max-w-6xl mx-auto w-full">
+      <!-- Toast/Alert System -->
+      <div id="dashboard-toast" class="hidden mb-6 p-4 rounded shadow-lvl1 border text-sm font-light transition"></div>
+
+      <!-- VIEW 1: DASHBOARD & DRAFTS -->
+      <div id="view-dashboard" class="space-y-8 block">
+        <!-- Section Opener -->
+        <div>
+          <h2 class="text-3xl font-light tracking-[-0.04em] text-white">Application Pipeline</h2>
+          <p class="text-white/80 text-sm font-light mt-1">Review drafts, check compatibility scores, and trigger delivery channels.</p>
+        </div>
+
+        <!-- Stats Grid (using tabular figures) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-5 rounded-xl bg-white shadow-lvl1 border border-stripi-hairline flex flex-col justify-between">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-stripi-ink-mute">Total Apps</span>
+            <span class="text-2xl font-semibold mt-2 tnum" id="stat-total">142</span>
+          </div>
+          <div class="p-5 rounded-xl bg-white shadow-lvl1 border border-stripi-hairline flex flex-col justify-between">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-stripi-ink-mute">Pending Drafts</span>
+            <span class="text-2xl font-semibold mt-2 text-yellow-600 tnum" id="stat-drafts">0</span>
+          </div>
+          <div class="p-5 rounded-xl bg-white shadow-lvl1 border border-stripi-hairline flex flex-col justify-between">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-stripi-ink-mute">Interviews</span>
+            <span class="text-2xl font-semibold mt-2 text-green-600 tnum" id="stat-interviews">12</span>
+          </div>
+          <div class="p-5 rounded-xl bg-white shadow-lvl1 border border-stripi-hairline flex flex-col justify-between">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-stripi-ink-mute">Response Rate</span>
+            <span class="text-2xl font-semibold mt-2 text-stripi-primary tnum" id="stat-rate">8.4%</span>
+          </div>
+        </div>
+
+        <!-- Content Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Drafts List -->
+          <div class="lg:col-span-1 space-y-4">
+            <h3 class="text-sm font-semibold uppercase tracking-wider text-stripi-ink-sec">Drafts Queue</h3>
+            <div id="drafts-list" class="space-y-2">
+              <p class="text-stripi-ink-mute text-sm py-4">No drafts awaiting review...</p>
+            </div>
+          </div>
+
+          <!-- Review Editor -->
+          <div class="lg:col-span-2">
+            <div id="editor-placeholder" class="h-64 rounded-xl border border-dashed border-stripi-hair-input bg-white flex items-center justify-center text-stripi-ink-mute text-sm font-light">
+              Select a draft from the queue to start reviewing and editing
+            </div>
+
+            <div id="editor-container" class="hidden p-6 rounded-xl bg-white shadow-lvl2 border border-stripi-hairline space-y-6">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="text-xl font-semibold tracking-[-0.02em] text-stripi-ink" id="editor-title">Software Engineer</h3>
+                  <p class="text-stripi-primary text-sm font-light mt-0.5" id="editor-company">Google</p>
+                </div>
+                <!-- Pill Tag Subdued -->
+                <div class="flex items-center space-x-1.5 bg-stripi-primary-subdued/30 px-3 py-1 rounded-full text-stripi-primary text-xs font-semibold tnum">
+                  <span>📈 Match:</span>
+                  <span id="editor-score">85%</span>
+                </div>
+              </div>
+
+              <!-- Form Inputs -->
+              <div class="space-y-4 text-sm">
+                <div>
+                  <label class="block text-xs font-medium uppercase tracking-wider text-stripi-ink-mute mb-2">Recruiter Email</label>
+                  <input id="editor-email" type="email" class="w-full px-3 py-2 rounded bg-white border border-stripi-hair-input text-stripi-ink outline-none focus:border-stripi-primary focus:ring-1 focus:ring-stripi-primary transition">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium uppercase tracking-wider text-stripi-ink-mute mb-2">Email Subject Line</label>
+                  <input id="editor-subject" type="text" class="w-full px-3 py-2 rounded bg-white border border-stripi-hair-input text-stripi-ink outline-none focus:border-stripi-primary focus:ring-1 focus:ring-stripi-primary transition">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium uppercase tracking-wider text-stripi-ink-mute mb-2">Email Body & Cover Letter</label>
+                  <textarea id="editor-body" rows="11" class="w-full px-3 py-2 rounded bg-white border border-stripi-hair-input text-stripi-ink outline-none focus:border-stripi-primary focus:ring-1 focus:ring-stripi-primary transition leading-relaxed text-sm"></textarea>
+                </div>
+              </div>
+
+              <!-- Button Pill Controls -->
+              <div class="flex justify-between items-center pt-4 border-t border-stripi-hairline">
+                <button id="editor-delete-btn" class="py-2 px-4 rounded-full border border-stripi-ruby hover:bg-stripi-ruby/5 text-stripi-ruby text-xs font-semibold active:scale-[0.98] transition">
+                  Reject Draft
+                </button>
+                <button id="editor-approve-btn" class="py-2 px-5 rounded-full bg-stripi-primary hover:bg-stripi-primary-deep text-white text-xs font-semibold shadow-lvl1 active:scale-[0.98] transition">
+                  Approve & Send Email
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: RESUMES & DOCUMENTS -->
+      <div id="view-documents" class="hidden space-y-8">
+        <div>
+          <h2 class="text-3xl font-light tracking-[-0.04em] text-white">Document Manager</h2>
+          <p class="text-white/80 text-sm font-light mt-1">Upload default and role-specific PDF resumes or certificate attachments.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Resumes Card -->
+          <div class="p-6 rounded-xl bg-white shadow-lvl1 border border-stripi-hairline space-y-6">
+            <h3 class="text-lg font-semibold text-stripi-ink border-b border-stripi-hairline pb-3">Resumes</h3>
+            
+            <form id="resume-upload-form" class="space-y-4">
+              <div>
+                <label class="block text-xs font-medium uppercase tracking-wider text-stripi-ink-mute mb-2">Upload Resume (PDF, max 5MB)</label>
+                <input id="resume-file" type="file" accept=".pdf" required class="w-full text-xs text-stripi-ink file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-stripi-primary file:text-white hover:file:bg-stripi-primary-deep transition">
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-medium uppercase tracking-wider text-stripi-ink-mute mb-2">Role Tag (e.g. Backend)</label>
+                  <input id="resume-tag" type="text" placeholder="e.g. Backend" class="w-full px-3 py-2 rounded bg-white border border-stripi-hair-input text-stripi-ink outline-none text-xs">
+                </div>
+                <div class="flex items-center mt-6">
+                  <input id="resume-default" type="checkbox" class="w-4 h-4 text-stripi-primary bg-white border-stripi-hair-input rounded focus:ring-stripi-primary">
+                  <label for="resume-default" class="ml-2 text-xs text-stripi-ink-sec font-medium">Set as Default</label>
+                </div>
+              </div>
+              <button type="submit" class="w-full py-2 px-4 rounded-full bg-stripi-primary hover:bg-stripi-primary-deep text-white text-xs font-semibold transition">
+                Upload Resume
+              </button>
+            </form>
+
+            <div id="resumes-list" class="space-y-2"></div>
+          </div>
+
+          <!-- Certificates Card -->
+          <div class="p-6 rounded-xl bg-white shadow-lvl1 border border-stripi-hairline space-y-6">
+            <h3 class="text-lg font-semibold text-stripi-ink border-b border-stripi-hairline pb-3">Certificates</h3>
+            
+            <form id="cert-upload-form" class="space-y-4">
+              <div>
+                <label class="block text-xs font-medium uppercase tracking-wider text-stripi-ink-mute mb-2">Upload Certificate (PDF, max 5MB)</label>
+                <input id="cert-file" type="file" accept=".pdf" required class="w-full text-xs text-stripi-ink file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-stripi-primary file:text-white hover:file:bg-stripi-primary-deep transition">
+              </div>
+              <div>
+                <label class="block text-xs font-medium uppercase tracking-wider text-stripi-ink-mute mb-2">Category (e.g. Cloud, AI)</label>
+                <input id="cert-category" type="text" placeholder="e.g. AI" class="w-full px-3 py-2 rounded bg-white border border-stripi-hair-input text-stripi-ink outline-none text-xs">
+              </div>
+              <button type="submit" class="w-full py-2 px-4 rounded-full bg-stripi-primary hover:bg-stripi-primary-deep text-white text-xs font-semibold transition">
+                Upload Certificate
+              </button>
+            </form>
+
+            <div id="certs-list" class="space-y-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3: BILLING & STRIPE PLANS -->
+      <div id="view-billing" class="hidden space-y-8">
+        <div class="text-center max-w-2xl mx-auto space-y-3 mb-10">
+          <h2 class="text-3xl font-light tracking-[-0.04em] text-white">Find Your Perfect Career Plan</h2>
+          <p class="text-white/80 text-sm font-light">Scale your application pipeline with automated delivery, dedicated AI personalizations, and ATS optimizers.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <!-- Basic Free Card -->
+          <div class="p-8 rounded-xl bg-white shadow-lvl1 border border-stripi-hairline flex flex-col justify-between">
+            <div class="space-y-4">
+              <span class="text-[10px] font-semibold uppercase tracking-wider text-stripi-ink-mute">Basic</span>
+              <div class="flex items-baseline text-stripi-ink">
+                <span class="text-3xl font-semibold tracking-[-0.03em] tnum">$0</span>
+                <span class="text-stripi-ink-mute text-xs ml-2">/ month</span>
+              </div>
+              <p class="text-xs text-stripi-ink-mute font-light leading-relaxed">Perfect for exploratory testing and manual draft reviews.</p>
+              
+              <ul class="space-y-2.5 pt-4 border-t border-stripi-hairline text-xs text-stripi-ink-sec font-light">
+                <li class="flex items-center"><span class="text-green-500 mr-2 font-bold">✓</span> 5 drafts per month</li>
+                <li class="flex items-center"><span class="text-green-500 mr-2 font-bold">✓</span> 1 active resume tag</li>
+                <li class="flex items-center text-stripi-ink-mute"><span class="mr-2 font-bold">✗</span> No automated email sending</li>
+                <li class="flex items-center text-stripi-ink-mute"><span class="mr-2 font-bold">✗</span> No certificate attachments</li>
+              </ul>
+            </div>
+            <button class="mt-8 w-full py-2 px-4 rounded-full border border-stripi-hair-input text-stripi-ink-mute text-xs font-semibold cursor-not-allowed">
+              Current Plan
+            </button>
+          </div>
+
+          <!-- Pro Card (Featured Tier - Inverted Navy Polarity) -->
+          <div class="p-8 rounded-xl bg-stripi-dark shadow-lvl2 border border-stripi-primary/30 flex flex-col justify-between relative overflow-hidden text-white">
+            <div class="absolute top-0 right-0 bg-stripi-primary text-[9px] uppercase font-bold tracking-wider px-3 py-1 rounded-bl">Popular</div>
+            
+            <div class="space-y-4">
+              <span class="text-[10px] font-semibold uppercase tracking-wider text-stripi-primary-subdued">Professional</span>
+              <div class="flex items-baseline text-white">
+                <span class="text-3xl font-semibold tracking-[-0.03em] tnum">$15</span>
+                <span class="text-stripi-primary-subdued text-xs ml-2">/ month</span>
+              </div>
+              <p class="text-xs text-stripi-primary-subdued font-light leading-relaxed">Best for active job hunters requiring reliable delivery.</p>
+              
+              <ul class="space-y-2.5 pt-4 border-t border-white/10 text-xs text-white/90 font-light">
+                <li class="flex items-center"><span class="text-stripi-primary-subdued mr-2 font-bold">✓</span> Unlimited drafts</li>
+                <li class="flex items-center"><span class="text-stripi-primary-subdued mr-2 font-bold">✓</span> 5 active resumes</li>
+                <li class="flex items-center"><span class="text-stripi-primary-subdued mr-2 font-bold">✓</span> Automated Gmail/SMTP sending</li>
+                <li class="flex items-center"><span class="text-stripi-primary-subdued mr-2 font-bold">✓</span> Up to 5 certificates</li>
+              </ul>
+            </div>
+            <!-- Primary Indigo Pill Button -->
+            <button id="upgrade-pro-btn" class="mt-8 w-full py-2 px-4 rounded-full bg-stripi-primary hover:bg-stripi-primary-deep text-white text-xs font-bold shadow-lvl1 active:scale-[0.98] transition">
+              Upgrade to Pro
+            </button>
+          </div>
+
+          <!-- Premium Card -->
+          <div class="p-8 rounded-xl bg-white shadow-lvl1 border border-stripi-hairline flex flex-col justify-between">
+            <div class="space-y-4">
+              <span class="text-[10px] font-semibold uppercase tracking-wider text-stripi-ink-mute">Premium</span>
+              <div class="flex items-baseline text-stripi-ink">
+                <span class="text-3xl font-semibold tracking-[-0.03em] tnum">$39</span>
+                <span class="text-stripi-ink-mute text-xs ml-2">/ month</span>
+              </div>
+              <p class="text-xs text-stripi-ink-mute font-light leading-relaxed">For elite candidates applying to top competitive tech roles.</p>
+              
+              <ul class="space-y-2.5 pt-4 border-t border-stripi-hairline text-xs text-stripi-ink-sec font-light">
+                <li class="flex items-center"><span class="text-green-500 mr-2 font-bold">✓</span> Everything in Pro tier</li>
+                <li class="flex items-center"><span class="text-green-500 mr-2 font-bold">✓</span> Unlimited resume tags</li>
+                <li class="flex items-center"><span class="text-green-500 mr-2 font-bold">✓</span> ATS matching score optimizations</li>
+                <li class="flex items-center"><span class="text-green-500 mr-2 font-bold">✓</span> Priority agent parsing queue</li>
+              </ul>
+            </div>
+            <button id="upgrade-premium-btn" class="mt-8 w-full py-2 px-4 rounded-full bg-stripi-primary hover:bg-stripi-primary-deep text-white text-xs font-bold shadow-lvl1 active:scale-[0.98] transition">
+              Go Premium
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Link Telegram Modal -->
+  <div id="pair-modal" class="hidden fixed inset-0 bg-stripi-ink/80 backdrop-filter backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="w-full max-w-sm p-6 bg-white rounded-xl shadow-lvl2 border border-stripi-hairline">
+      <h3 class="text-lg font-semibold text-stripi-ink mb-1">Link Telegram Bot</h3>
+      <p class="text-stripi-ink-mute text-xs mb-6 font-light leading-relaxed">Enter this pairing code in your Telegram Bot session using the command `/link &lt;code&gt;`.</p>
+      
+      <div class="bg-stripi-canvas-soft py-4 rounded border border-stripi-hairline text-center tracking-widest text-2xl font-semibold text-stripi-primary mb-6 tnum" id="modal-pair-code">
+        ------
+      </div>
+
+      <div class="flex justify-end">
+        <button id="pair-modal-close" class="py-2 px-5 rounded-full bg-stripi-canvas-soft hover:bg-stripi-hairline text-stripi-ink text-xs font-semibold transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App scripts -->
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
