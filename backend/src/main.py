@@ -51,6 +51,37 @@ def run_migrations_on_startup():
     except Exception as e:
         logger.error(f"Error running startup database migrations: {e}")
 
+    # Patch missing columns that Alembic may not have created
+    _patch_missing_columns()
+
+
+def _patch_missing_columns():
+    """Add any columns that exist in SQLAlchemy models but are missing from the live DB."""
+    from sqlalchemy import text, inspect
+    from src.models.base import engine
+
+    patches = [
+        ("users", "updated_at", "TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()"),
+        ("users", "stripe_customer_id", "VARCHAR(255)"),
+        ("users", "stripe_subscription_id", "VARCHAR(255)"),
+        ("users", "subscription_tier", "VARCHAR(50) DEFAULT 'free'"),
+        ("users", "subscription_status", "VARCHAR(50) DEFAULT 'active'"),
+    ]
+
+    try:
+        inspector = inspect(engine)
+        for table_name, col_name, col_type in patches:
+            if not inspector.has_table(table_name):
+                continue
+            existing_cols = [c["name"] for c in inspector.get_columns(table_name)]
+            if col_name not in existing_cols:
+                logger.info(f"Patching missing column: {table_name}.{col_name}")
+                with engine.begin() as conn:
+                    conn.execute(text(f'ALTER TABLE {table_name} ADD COLUMN {col_name} {col_type}'))
+                logger.info(f"Successfully added {table_name}.{col_name}")
+    except Exception as e:
+        logger.error(f"Error patching missing columns: {e}")
+
 # Register routes
 app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(drafts.router, prefix=settings.API_V1_STR)
