@@ -372,7 +372,8 @@ document.getElementById('sidebar-pair').addEventListener('click', async () => {
     modal.className = 'fixed inset-0 bg-black/80 backdrop-filter backdrop-blur-sm flex items-center justify-center p-4 z-50 block';
   } catch (err) {
     console.error(err);
-    showToast('Failed to generate pairing code.', 'error');
+    const detail = err.response?.data?.detail || 'Failed to generate pairing code.';
+    showToast(detail, 'error');
   }
 });
 

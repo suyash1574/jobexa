@@ -108,16 +108,22 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 @router.post("/telegram-pairing-token", response_model=TelegramPairingCode)
 def generate_pairing_token(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Generate 6-digit numeric pairing code
-    pairing_token = "".join(random.choices(string.digits, k=6))
-    expires_at = datetime.utcnow() + timedelta(minutes=settings.TELEGRAM_PAIRING_CODE_EXPIRE_MINUTES)
-    
-    current_user.telegram_pairing_token = pairing_token
-    current_user.pairing_token_expires_at = expires_at
-    db.commit()
-    db.refresh(current_user)
-    
-    return {"pairing_token": pairing_token, "expires_at": expires_at}
+    try:
+        # Generate 6-digit numeric pairing code
+        pairing_token = "".join(random.choices(string.digits, k=6))
+        expires_at = datetime.utcnow() + timedelta(minutes=settings.TELEGRAM_PAIRING_CODE_EXPIRE_MINUTES)
+        
+        current_user.telegram_pairing_token = pairing_token
+        current_user.pairing_token_expires_at = expires_at
+        db.commit()
+        db.refresh(current_user)
+        
+        return {"pairing_token": pairing_token, "expires_at": expires_at}
+    except Exception as e:
+        db.rollback()
+        import logging
+        logging.getLogger("jobexa").error(f"Pairing token generation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Pairing token error: {str(e)}")
 
 @router.get("/supabase-config")
 def get_supabase_config():
