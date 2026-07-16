@@ -44,9 +44,16 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     except (JWTError, ValueError):
         # Fallback to Supabase JWT decoding
         try:
-            # Decode without strict signature checks to support public client authentication
-            payload = jwt.decode(token, settings.JWT_SECRET_KEY, options={"verify_signature": False})
-            email: str = payload.get("email")
+            import base64
+            import json
+            parts = token.split('.')
+            if len(parts) != 3:
+                raise credentials_exception
+            payload_b64 = parts[1]
+            payload_b64 += '=' * (-len(payload_b64) % 4)
+            payload_bytes = base64.urlsafe_b64decode(payload_b64)
+            payload = json.loads(payload_bytes.decode('utf-8'))
+            email = payload.get("email")
             if not email:
                 raise credentials_exception
             user = db.query(User).filter(User.email == email).first()
