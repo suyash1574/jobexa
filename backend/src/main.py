@@ -66,6 +66,7 @@ def read_root():
     return {"message": "Jobexa API is active. Pair with Telegram Bot or use the Web Dashboard."}
 
 @app.post("/webhook/telegram")
+@app.post("/webhook/telegram/")
 async def telegram_webhook(update_dict: dict):
     logger.info(f"Received Telegram webhook update payload: {update_dict}")
     from bot import bot_app
