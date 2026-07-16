@@ -118,3 +118,13 @@ def get_supabase_config():
         "supabase_url": settings.SUPABASE_URL,
         "supabase_key": settings.SUPABASE_KEY
     }
+
+@router.get("/bot-status")
+def get_bot_status():
+    from bot import bot_app
+    return {
+        "bot_token_configured": settings.TELEGRAM_BOT_TOKEN is not None and len(settings.TELEGRAM_BOT_TOKEN) > 5,
+        "bot_app_initialized": bot_app is not None,
+        "bot_running": bot_app.running if bot_app else False,
+        "token_preview": f"{settings.TELEGRAM_BOT_TOKEN[:4]}...{settings.TELEGRAM_BOT_TOKEN[-4:]}" if settings.TELEGRAM_BOT_TOKEN else "None"
+    }

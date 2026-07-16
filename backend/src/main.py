@@ -47,6 +47,7 @@ def read_root():
 
 @app.post("/webhook/telegram")
 async def telegram_webhook(update_dict: dict):
+    logger.info(f"Received Telegram webhook update payload: {update_dict}")
     from bot import bot_app
     from telegram import Update
     if bot_app:
@@ -54,11 +55,16 @@ async def telegram_webhook(update_dict: dict):
             update = Update.de_json(update_dict, bot_app.bot)
             # Ensure bot application is initialized and started before processing updates
             if not bot_app.running:
+                logger.info("Initializing and starting Telegram bot application...")
                 await bot_app.initialize()
                 await bot_app.start()
+            logger.info("Processing update via process_update...")
             await bot_app.process_update(update)
+            logger.info("Telegram update processed successfully.")
         except Exception as e:
+            import traceback
             logger.error(f"Error processing telegram webhook: {e}")
+            logger.error(traceback.format_exc())
     else:
-        logger.warning("Telegram Bot Application not initialized. Webhook request skipped.")
+        logger.warning("Telegram Bot Application is not initialized (check TELEGRAM_BOT_TOKEN environment variable). Webhook request skipped.")
     return {"status": "ok"}
