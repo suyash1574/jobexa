@@ -30,6 +30,26 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+@app.on_event("startup")
+def run_migrations_on_startup():
+    try:
+        from alembic.config import Config
+        from alembic import command
+        
+        # Resolve alembic.ini path
+        alembic_ini_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "alembic.ini"))
+        if os.path.exists(alembic_ini_path):
+            logger.info("Executing automatic startup migrations on database...")
+            alembic_cfg = Config(alembic_ini_path)
+            # Inject dynamic DB connection from settings
+            alembic_cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+            command.upgrade(alembic_cfg, "head")
+            logger.info("Automatic database migrations completed successfully!")
+        else:
+            logger.warning(f"alembic.ini not found at {alembic_ini_path}. Skipping automatic migrations.")
+    except Exception as e:
+        logger.error(f"Error running startup database migrations: {e}")
+
 # Register routes
 app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(drafts.router, prefix=settings.API_V1_STR)
