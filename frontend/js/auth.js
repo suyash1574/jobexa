@@ -1,5 +1,10 @@
 // Auth Controller
-document.addEventListener('DOMContentLoaded', () => {
+let supabaseClient = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Try initializing Supabase Auth client first
+  await initSupabase();
+
   const token = localStorage.getItem('token');
   if (token) {
     showDashboard();
@@ -38,43 +43,84 @@ document.addEventListener('DOMContentLoaded', () => {
     authAlert.className = 'hidden';
 
     try {
-      if (authMode === 'login') {
-        const formData = new FormData();
-        formData.append('username', emailInput.value);
-        formData.append('password', passwordInput.value);
-
-        const response = await apiClient.post('/auth/token', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        
-        localStorage.setItem('token', response.data.access_token);
-        showDashboard();
+      if (supabaseClient) {
+        // Authenticate via Supabase Auth client
+        if (authMode === 'login') {
+          const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: emailInput.value,
+            password: passwordInput.value
+          });
+          if (error) throw error;
+          
+          localStorage.setItem('token', data.session.access_token);
+          showDashboard();
+        } else {
+          const { data, error } = await supabaseClient.auth.signUp({
+            email: emailInput.value,
+            password: passwordInput.value
+          });
+          if (error) throw error;
+          
+          authAlert.innerText = 'Registration email confirmation link sent! Check your inbox.';
+          authAlert.className = 'block mb-4 p-3 rounded bg-stripi-primary-subdued/30 border border-stripi-primary text-stripi-primary text-xs font-medium';
+        }
       } else {
-        await apiClient.post('/auth/register', {
-          email: emailInput.value,
-          password: passwordInput.value
-        });
-        
-        // Auto login on register
-        authMode = 'login';
-        tabLogin.click();
-        authForm.dispatchEvent(new Event('submit'));
+        // Fallback to custom backend database auth
+        if (authMode === 'login') {
+          const formData = new FormData();
+          formData.append('username', emailInput.value);
+          formData.append('password', passwordInput.value);
+
+          const response = await apiClient.post('/auth/token', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          });
+          
+          localStorage.setItem('token', response.data.access_token);
+          showDashboard();
+        } else {
+          await apiClient.post('/auth/register', {
+            email: emailInput.value,
+            password: passwordInput.value
+          });
+          
+          // Auto login on register
+          authMode = 'login';
+          tabLogin.click();
+          authForm.dispatchEvent(new Event('submit'));
+        }
       }
     } catch (err) {
       console.error(err);
-      authAlert.innerText = err.response?.data?.detail || 'Authentication failed. Please check credentials.';
+      const errMsg = err.message || err.response?.data?.detail || 'Authentication failed. Please check credentials.';
+      authAlert.innerText = errMsg;
       authAlert.className = 'block mb-4 p-3 rounded bg-stripi-ruby/10 border border-stripi-ruby/20 text-stripi-ruby text-xs font-medium';
     }
   });
 
   // Logout Button
-  document.getElementById('logout-btn').addEventListener('click', () => {
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    if (supabaseClient) {
+      await supabaseClient.auth.signOut();
+    }
     localStorage.removeItem('token');
     showAuth();
   });
 });
+
+async function initSupabase() {
+  try {
+    const configResp = await apiClient.get('/auth/supabase-config');
+    const { supabase_url, supabase_key } = configResp.data;
+    if (supabase_url && supabase_key && window.supabase) {
+      supabaseClient = window.supabase.createClient(supabase_url, supabase_key);
+      console.log('Supabase Auth Client initialized successfully.');
+    }
+  } catch (err) {
+    console.warn('Unable to load Supabase public config. Defaulting to local login database.', err);
+  }
+}
 
 function showDashboard() {
   document.getElementById('auth-section').className = 'hidden';

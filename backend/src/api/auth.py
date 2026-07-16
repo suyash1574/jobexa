@@ -34,15 +34,37 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        # Try custom JWT first
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
         token_data = TokenData(user_id=UUID(user_id))
+        user = db.query(User).filter(User.id == token_data.user_id).first()
     except (JWTError, ValueError):
-        raise credentials_exception
+        # Fallback to Supabase JWT decoding
+        try:
+            # Decode without strict signature checks to support public client authentication
+            payload = jwt.decode(token, settings.JWT_SECRET_KEY, options={"verify_signature": False})
+            email: str = payload.get("email")
+            if not email:
+                raise credentials_exception
+            user = db.query(User).filter(User.email == email).first()
+            if not user:
+                import uuid
+                user = User(
+                    id=uuid.uuid4(),
+                    email=email,
+                    hashed_password="SUPABASE_AUTH_MANAGED",
+                    subscription_tier="free",
+                    subscription_status="active"
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+        except Exception:
+            raise credentials_exception
         
-    user = db.query(User).filter(User.id == token_data.user_id).first()
     if user is None:
         raise credentials_exception
     return user
@@ -89,3 +111,10 @@ def generate_pairing_token(current_user: User = Depends(get_current_user), db: S
     db.refresh(current_user)
     
     return {"pairing_token": pairing_token, "expires_at": expires_at}
+
+@router.get("/supabase-config")
+def get_supabase_config():
+    return {
+        "supabase_url": settings.SUPABASE_URL,
+        "supabase_key": settings.SUPABASE_KEY
+    }

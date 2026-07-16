@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     # Supabase Storage / S3 (Default to local folder if not configured for simple tests)
     SUPABASE_URL: Optional[str] = None
     SUPABASE_KEY: Optional[str] = None
+    SUPABASE_JWT_SECRET: Optional[str] = None
     SUPABASE_BUCKET: str = "jobexa-documents"
 
     # Email Config (Gmail OAuth / SMTP fallback)
