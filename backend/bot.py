@@ -109,21 +109,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
     )
 
+bot_app = None
+if settings.TELEGRAM_BOT_TOKEN:
+    bot_app = ApplicationBuilder().token(settings.TELEGRAM_BOT_TOKEN).build()
+    bot_app.add_handler(CommandHandler("start", start_command))
+    bot_app.add_handler(CommandHandler("link", link_command))
+    bot_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    bot_app.add_handler(MessageHandler(filters.Document.ALL, handle_message))
+    bot_app.add_handler(MessageHandler(filters.PHOTO, handle_message))
+
 def main():
-    if not settings.TELEGRAM_BOT_TOKEN:
+    if not bot_app:
         logger.error("TELEGRAM_BOT_TOKEN not found in configurations. Exiting bot.")
         return
 
-    app = ApplicationBuilder().token(settings.TELEGRAM_BOT_TOKEN).build()
-    
-    app.add_handler(CommandHandler("start", start_command))
-    app.add_handler(CommandHandler("link", link_command))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    app.add_handler(MessageHandler(filters.Document.ALL, handle_message))
-    app.add_handler(MessageHandler(filters.PHOTO, handle_message))
-
-    logger.info("Starting Telegram Bot...")
-    app.run_polling()
+    logger.info("Starting Telegram Bot (Polling)...")
+    bot_app.run_polling()
 
 if __name__ == "__main__":
     main()
