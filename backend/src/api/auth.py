@@ -129,9 +129,32 @@ def get_supabase_config():
 @router.get("/bot-status")
 def get_bot_status():
     from bot import bot_app
+    from src.models.base import engine, db_connection_error
+    
+    # Mask password in DB URL
+    db_url = settings.DATABASE_URL or ""
+    masked_db_url = "None"
+    if db_url:
+        try:
+            parts = db_url.split("@")
+            if len(parts) == 2:
+                prefix = parts[0].split(":")
+                dialect = prefix[0]
+                username = prefix[1].replace("/", "")
+                host = parts[1]
+                masked_db_url = f"{dialect}://{username}:***@{host}"
+            else:
+                masked_db_url = db_url
+        except Exception:
+            masked_db_url = "Could not parse/mask DB URL"
+
     return {
         "bot_token_configured": settings.TELEGRAM_BOT_TOKEN is not None and len(settings.TELEGRAM_BOT_TOKEN) > 5,
         "bot_app_initialized": bot_app is not None,
         "bot_running": bot_app.running if bot_app else False,
-        "token_preview": f"{settings.TELEGRAM_BOT_TOKEN[:4]}...{settings.TELEGRAM_BOT_TOKEN[-4:]}" if settings.TELEGRAM_BOT_TOKEN else "None"
+        "token_preview": f"{settings.TELEGRAM_BOT_TOKEN[:4]}...{settings.TELEGRAM_BOT_TOKEN[-4:]}" if settings.TELEGRAM_BOT_TOKEN else "None",
+        "database_engine": engine.name if engine else "None",
+        "database_connected": db_connection_error is None,
+        "database_url_masked": masked_db_url,
+        "database_connection_error": db_connection_error
     }

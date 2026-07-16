@@ -7,11 +7,13 @@ logger = logging.getLogger("jobexa.database")
 
 db_url = settings.DATABASE_URL
 engine = None
+db_connection_error = None
 
 # If no DB URL is set or it points to localhost (default config), use SQLite for Render compatibility
 if not db_url or "localhost:5432" in db_url:
     logger.warning("No production DATABASE_URL configured or localhost detected. Defaulting to local SQLite file database.")
     db_url = "sqlite:///../jobexa.db"
+    db_connection_error = "Using local SQLite database fallback (no production DATABASE_URL or localhost detected)."
 
 try:
     connect_args = {"check_same_thread": False} if "sqlite" in db_url else {}
@@ -21,6 +23,7 @@ try:
         pass
     logger.info(f"Database connection verified: {db_url.split('@')[-1] if '@' in db_url else db_url}")
 except Exception as e:
+    db_connection_error = str(e)
     logger.error(f"Failed to connect to database {db_url} due to: {e}. Falling back to SQLite.")
     db_url = "sqlite:///../jobexa.db"
     engine = create_engine(db_url, pool_pre_ping=True, connect_args={"check_same_thread": False})
