@@ -116,6 +116,41 @@ async function initSupabase() {
     if (supabase_url && supabase_key && window.supabase) {
       supabaseClient = window.supabase.createClient(supabase_url, supabase_key);
       console.log('Supabase Auth Client initialized successfully.');
+
+      // Make the Google login button visible
+      const googleContainer = document.getElementById('google-auth-container');
+      if (googleContainer) {
+        googleContainer.classList.remove('hidden');
+      }
+
+      // Bind click handler for Google OAuth login
+      const googleBtn = document.getElementById('google-signin-btn');
+      if (googleBtn) {
+        googleBtn.addEventListener('click', async () => {
+          try {
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+              provider: 'google',
+              options: {
+                redirectTo: window.location.origin
+              }
+            });
+            if (error) throw error;
+          } catch (err) {
+            console.error(err);
+            const authAlert = document.getElementById('auth-alert');
+            authAlert.innerText = err.message || 'Google Auth failed.';
+            authAlert.className = 'block mb-4 p-3 rounded bg-stripi-ruby/10 border border-stripi-ruby/20 text-stripi-ruby text-xs font-medium';
+          }
+        });
+      }
+
+      // Listen for auth state changes (e.g. redirect back from Google OAuth)
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (session) {
+          localStorage.setItem('token', session.access_token);
+          showDashboard();
+        }
+      });
     }
   } catch (err) {
     console.warn('Unable to load Supabase public config. Defaulting to local login database.', err);
