@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status, Body
 from sqlalchemy.orm import Session
 from uuid import UUID
 import uuid
@@ -11,6 +11,7 @@ from src.models.resume import Resume, Certificate
 from src.schemas.resume import ResumeOut, CertificateOut
 from src.api.auth import get_current_user
 from src.services.storage import StorageService
+from src.services.pdf_compiler import compile_markdown_to_pdf
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
@@ -26,7 +27,6 @@ async def upload_resume(
         raise HTTPException(status_code=400, detail="Only PDF files are supported for resumes.")
 
     try:
-        # Read bytes to upload and measure size
         file_bytes = await file.read()
         file_url = StorageService.upload_file(
             file_bytes=file_bytes,
@@ -34,7 +34,6 @@ async def upload_resume(
             folder="resumes"
         )
 
-        # If setting as default, unset other default resumes
         if is_default:
             db.query(Resume).filter(
                 Resume.user_id == current_user.id,
@@ -59,6 +58,61 @@ async def upload_resume(
         raise HTTPException(status_code=400, detail=str(val_err))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to upload resume: {str(e)}")
+
+@router.post("/resumes/variants", response_model=ResumeOut, status_code=status.HTTP_201_CREATED)
+def create_resume_variant(
+    filename: str = Body(...),
+    markdown_content: str = Body(...),
+    role_tag: Optional[str] = Body(None),
+    is_default: bool = Body(False),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Creates a raw Markdown resume variant and compiles it to PDF."""
+    try:
+        pdf_path = compile_markdown_to_pdf(markdown_content)
+        file_url = f"/static/uploads/{uuid.uuid4().hex[:8]}_{filename}.pdf"
+        
+        if is_default:
+            db.query(Resume).filter(
+                Resume.user_id == current_user.id,
+                Resume.is_default == True
+            ).update({Resume.is_default: False})
+
+        new_variant = Resume(
+            id=uuid.uuid4(),
+            user_id=current_user.id,
+            filename=filename if filename.endswith(".pdf") else f"{filename}.pdf",
+            file_url=file_url,
+            file_size=len(markdown_content.encode('utf-8')),
+            role_tag=role_tag or "Custom",
+            markdown_content=markdown_content,
+            is_default=is_default,
+            created_at=datetime.utcnow()
+        )
+        db.add(new_variant)
+        db.commit()
+        db.refresh(new_variant)
+        return new_variant
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to create resume variant: {str(e)}")
+
+@router.post("/resumes/{id}/compile")
+def compile_resume(
+    id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Compiles an existing Markdown resume variant into a PDF."""
+    resume = db.query(Resume).filter(Resume.id == id, Resume.user_id == current_user.id).first()
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume variant not found")
+    if not resume.markdown_content:
+        return {"file_url": resume.file_url}
+        
+    compiled_path = compile_markdown_to_pdf(resume.markdown_content)
+    return {"file_url": compiled_path}
 
 @router.get("/resumes", response_model=List[ResumeOut])
 def list_resumes(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):

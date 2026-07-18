@@ -18,6 +18,11 @@ class User(Base):
     pairing_token_expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Gmail OAuth 2.0 Credentials
+    gmail_access_token = Column(String, nullable=True)
+    gmail_refresh_token = Column(String, nullable=True)
+    gmail_token_expires_at = Column(DateTime, nullable=True)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)

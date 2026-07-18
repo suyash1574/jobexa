@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     SMTP_USERNAME: Optional[str] = None
     SMTP_PASSWORD: Optional[str] = None
 
+    # Google OAuth 2.0 Settings
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GOOGLE_OAUTH_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/gmail/callback"
+    ENCRYPTION_SECRET_KEY: str = "jobexa-secret-key-32-chars-long!"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
@@ -131,6 +132,92 @@ def get_supabase_config():
         "supabase_url": settings.SUPABASE_URL,
         "supabase_key": settings.SUPABASE_KEY
     }
+
+@router.get("/gmail/authorize")
+def gmail_authorize(current_user: User = Depends(get_current_user)):
+    """Generates the Google OAuth 2.0 consent URL for Gmail sending & reading."""
+    from google_auth_oauthlib.flow import Flow
+    
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
+        # Development fallback message
+        return JSONResponse(
+            status_code=400,
+            content={"detail": "Google OAuth credentials not configured on backend. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env"}
+        )
+
+    scopes = [
+        "https://www.googleapis.com/auth/gmail.send",
+        "https://www.googleapis.com/auth/gmail.readonly"
+    ]
+
+    flow = Flow.from_client_config(
+        {
+            "web": {
+                "client_id": settings.GOOGLE_CLIENT_ID,
+                "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+        },
+        scopes=scopes,
+        redirect_uri=settings.GOOGLE_OAUTH_REDIRECT_URI
+    )
+
+    authorization_url, state = flow.authorization_url(
+        access_type="offline",
+        include_granted_scopes="true",
+        prompt="consent",
+        state=str(current_user.id)
+    )
+
+    return {"authorization_url": authorization_url, "state": state}
+
+@router.get("/gmail/callback")
+def gmail_callback(code: str, state: str, db: Session = Depends(get_db)):
+    """Receives authorization code from Google, exchanges for tokens, and saves to User record."""
+    from google_auth_oauthlib.flow import Flow
+    import uuid
+    
+    try:
+        user_id = uuid.UUID(state)
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+            
+        scopes = [
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/gmail.readonly"
+        ]
+
+        flow = Flow.from_client_config(
+            {
+                "web": {
+                    "client_id": settings.GOOGLE_CLIENT_ID,
+                    "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                }
+            },
+            scopes=scopes,
+            redirect_uri=settings.GOOGLE_OAUTH_REDIRECT_URI
+        )
+
+        flow.fetch_token(code=code)
+        credentials = flow.credentials
+
+        user.gmail_access_token = credentials.token
+        user.gmail_refresh_token = credentials.refresh_token or user.gmail_refresh_token
+        user.gmail_token_expires_at = credentials.expiry
+
+        db.commit()
+        db.refresh(user)
+
+        # Redirect back to frontend settings tab with success status
+        return RedirectResponse(url="/#settings?gmail=connected")
+    except Exception as e:
+        db.rollback()
+        logging.getLogger("jobexa").error(f"Gmail OAuth Callback Failed: {e}")
+        return RedirectResponse(url=f"/#settings?error={str(e)}")
 
 @router.get("/bot-status")
 def get_bot_status():

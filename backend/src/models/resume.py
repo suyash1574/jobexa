@@ -15,6 +15,7 @@ class Resume(Base):
     file_size = Column(Integer, nullable=False)
     role_tag = Column(String, nullable=True)
     is_default = Column(Boolean, nullable=False, default=False)
+    markdown_content = Column(String, nullable=True)  # Raw markdown source for compiling PDF
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 class Certificate(Base):

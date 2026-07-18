@@ -1,0 +1,53 @@
+{
+  "endpoints": [
+    {
+      "path": "/api/v1/documents/resumes/variants",
+      "method": "POST",
+      "summary": "Create a new resume variant",
+      "description": "Uploads raw Markdown/LaTeX content for a resume variant optimized for a specific role tag.",
+      "security": [{"BearerAuth": []}],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["filename", "markdown_content", "role_tag"],
+              "properties": {
+                "filename": {"type": "string"},
+                "markdown_content": {"type": "string"},
+                "role_tag": {"type": "string"}
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Variant created successfully"
+        }
+      }
+    },
+    {
+      "path": "/api/v1/documents/resumes/{id}/compile",
+      "method": "POST",
+      "summary": "Compile resume variant to PDF",
+      "description": "Trigger compilation of a Markdown resume variant into a PDF file and returns the file URL.",
+      "security": [{"BearerAuth": []}],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file_url": {"type": "string"}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -74,7 +74,7 @@ def test_dashboard_analytics_mocked(client, monkeypatch):
     assert data["applications_this_month"] == 5
     assert data["pending_drafts"] == 2
     assert data["interviews"] == 1
-    assert data["response_rate"] == 80.0 # 8 / 10 * 100
+    assert data["response_rate"] == 90.0 # (1 interview + 8 offers) / 10 * 100
 
     app.dependency_overrides.pop(get_db, None)
 

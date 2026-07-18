@@ -1,0 +1,51 @@
+{
+  "endpoints": [
+    {
+      "path": "/api/v1/drafts/{id}/approve",
+      "method": "POST",
+      "summary": "Approve and send an application draft",
+      "description": "Validates, converts the draft into an ApplicationRecord, attaches the dynamically compiled PDF resume variant, and dispatches the email via Gmail API.",
+      "security": [{"BearerAuth": []}],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {"type": "string"},
+                  "application_record_id": {"type": "string", "format": "uuid"}
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Missing recruiter email or Gmail token not linked"
+        }
+      }
+    },
+    {
+      "path": "/api/v1/drafts/follow-ups/{id}/approve",
+      "method": "POST",
+      "summary": "Approve and send a pending follow-up email",
+      "description": "Triggers immediate dispatch of a pending follow-up email draft.",
+      "security": [{"BearerAuth": []}],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {"type": "string"},
+                  "sent_at": {"type": "string", "format": "date-time"}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

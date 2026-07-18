@@ -1,0 +1,48 @@
+{
+  "endpoints": [
+    {
+      "path": "/api/v1/analytics/dashboard",
+      "method": "GET",
+      "summary": "Retrieve dashboard metrics",
+      "description": "Returns counts for applications by state, weekly volume metrics, success ratios, and top applied/requested skills.",
+      "security": [{"BearerAuth": []}],
+      "responses": {
+        "200": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "total_applications": {"type": "integer"},
+                  "pending_drafts": {"type": "integer"},
+                  "interviews": {"type": "integer"},
+                  "offers": {"type": "integer"},
+                  "rejections": {"type": "integer"},
+                  "response_rate": {"type": "integer"},
+                  "weekly_volume": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "week": {"type": "string"},
+                        "count": {"type": "integer"}
+                      }
+                    }
+                  },
+                  "most_applied_skills": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                  },
+                  "most_requested_skills": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

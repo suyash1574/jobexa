@@ -55,12 +55,12 @@ def test_approve_delivery_failure(client, monkeypatch):
 
     app.dependency_overrides[get_db] = override_get_db
 
-    # 2. Force EmailService.send_application_email to raise SMTPAuthenticationError
-    import smtplib
+    # 2. Force send_application_email_via_gmail to raise exception
     def mock_send_email(*args, **kwargs):
-        raise smtplib.SMTPAuthenticationError(535, b"Invalid credentials")
+        raise Exception("SMTP Authentication Error: Invalid credentials")
 
-    monkeypatch.setattr(EmailService, "send_application_email", mock_send_email)
+    import src.api.drafts
+    monkeypatch.setattr(src.api.drafts, "send_application_email_via_gmail", mock_send_email)
 
     # 3. Call endpoint
     response = client.post(f"/api/v1/drafts/{mock_draft.id}/approve")
