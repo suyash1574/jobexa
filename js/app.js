@@ -2,9 +2,16 @@
 let activeDraftId = null;
 let draftsList = [];
 
-// Base API configuration
+// Base API configuration with dynamic local/production detection
+const getApiBaseUrl = () => {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') {
+    return 'http://localhost:8000/api/v1';
+  }
+  return 'https://jobexa-backend.onrender.com/api/v1';
+};
+
 const apiClient = axios.create({
-  baseURL: 'https://jobexa-backend.onrender.com/api/v1'
+  baseURL: getApiBaseUrl()
 });
 
 // Automatically inject JWT token into all requests
