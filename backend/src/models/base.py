@@ -9,11 +9,11 @@ db_url = settings.DATABASE_URL
 engine = None
 db_connection_error = None
 
-# If no DB URL is set or it points to localhost (default config), use SQLite for Render compatibility
-if not db_url or "localhost:5432" in db_url:
-    logger.warning("No production DATABASE_URL configured or localhost detected. Defaulting to local SQLite file database.")
+# If no DB URL is set, points to localhost, or contains placeholder text, use SQLite for local compatibility
+if not db_url or "localhost:5432" in db_url or "[YOUR-PASSWORD]" in db_url or "YOUR_" in db_url:
+    logger.info("Local environment detected. Defaulting to local SQLite file database (jobexa.db).")
     db_url = "sqlite:///../jobexa.db"
-    db_connection_error = "Using local SQLite database fallback (no production DATABASE_URL or localhost detected)."
+    db_connection_error = "Using local SQLite database."
 
 try:
     connect_args = {"check_same_thread": False} if "sqlite" in db_url else {}
@@ -33,6 +33,15 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Declarative Base
 Base = declarative_base()
+
+def init_db():
+    """Import all models and create tables if they do not exist."""
+    import src.models.user
+    import src.models.resume
+    import src.models.application
+    Base.metadata.create_all(bind=engine)
+
+init_db()
 
 # Dependency to get db session
 def get_db():

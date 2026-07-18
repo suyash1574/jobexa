@@ -1,5 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Integer, Boolean, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, DateTime, Integer, Boolean, ForeignKey, Uuid
 from sqlalchemy.orm import relationship
 import uuid
 from datetime import datetime
@@ -8,8 +7,8 @@ from src.models.base import Base
 class Resume(Base):
     __tablename__ = "resumes"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     filename = Column(String, nullable=False)
     file_url = Column(String, nullable=False)
     file_size = Column(Integer, nullable=False)
@@ -21,8 +20,8 @@ class Resume(Base):
 class Certificate(Base):
     __tablename__ = "certificates"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     filename = Column(String, nullable=False)
     file_url = Column(String, nullable=False)
     file_size = Column(Integer, nullable=False)

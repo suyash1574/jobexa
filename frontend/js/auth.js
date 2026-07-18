@@ -43,57 +43,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     authAlert.className = 'hidden';
 
     try {
-      if (supabaseClient) {
-        // Authenticate via Supabase Auth client
-        if (authMode === 'login') {
-          const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: emailInput.value,
-            password: passwordInput.value
-          });
-          if (error) throw error;
-          
-          localStorage.setItem('token', data.session.access_token);
-          showDashboard();
-        } else {
-          const { data, error } = await supabaseClient.auth.signUp({
-            email: emailInput.value,
-            password: passwordInput.value
-          });
-          if (error) throw error;
-          
-          authAlert.innerText = 'Registration email confirmation link sent! Check your inbox.';
-          authAlert.className = 'block mb-4 p-3 rounded bg-stripi-primary-subdued/30 border border-stripi-primary text-stripi-primary text-xs font-medium';
-        }
-      } else {
-        // Fallback to custom backend database auth
-        if (authMode === 'login') {
-          const formData = new FormData();
-          formData.append('username', emailInput.value);
-          formData.append('password', passwordInput.value);
+      if (authMode === 'login') {
+        const formData = new FormData();
+        formData.append('username', emailInput.value);
+        formData.append('password', passwordInput.value);
 
-          const response = await apiClient.post('/auth/token', formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          });
-          
-          localStorage.setItem('token', response.data.access_token);
-          showDashboard();
-        } else {
-          await apiClient.post('/auth/register', {
-            email: emailInput.value,
-            password: passwordInput.value
-          });
-          
-          // Auto login on register
-          authMode = 'login';
-          tabLogin.click();
-          authForm.dispatchEvent(new Event('submit'));
-        }
+        const response = await apiClient.post('/auth/token', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        
+        localStorage.setItem('token', response.data.access_token);
+        showDashboard();
+      } else {
+        await apiClient.post('/auth/register', {
+          email: emailInput.value,
+          password: passwordInput.value
+        });
+        
+        // Auto login on register
+        const formData = new FormData();
+        formData.append('username', emailInput.value);
+        formData.append('password', passwordInput.value);
+
+        const response = await apiClient.post('/auth/token', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        
+        localStorage.setItem('token', response.data.access_token);
+        showDashboard();
       }
     } catch (err) {
       console.error(err);
-      const errMsg = err.message || err.response?.data?.detail || 'Authentication failed. Please check credentials.';
+      let errMsg = err.response?.data?.detail || err.message || 'Authentication failed. Please check credentials.';
+      if (Array.isArray(errMsg)) {
+        errMsg = errMsg.map(e => e.msg || e).join(', ');
+      }
       authAlert.innerText = errMsg;
       authAlert.className = 'block mb-4 p-3 rounded bg-stripi-ruby/10 border border-stripi-ruby/20 text-stripi-ruby text-xs font-medium';
     }
